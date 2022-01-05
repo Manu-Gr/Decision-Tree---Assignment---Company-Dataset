@@ -1,0 +1,246 @@
+Problem Statement:
+A cloth manufacturing company is interested to know about the segment or attributes causes high sale.
+About the data:
+Let’s consider a Company dataset with around 10 variables and 400 records. The attributes are as follows:
+Sales -- Unit sales (in thousands) at each location
+Competitor Price -- Price charged by competitor at each location
+Income -- Community income level (in thousands of dollars)
+Advertising -- Local advertising budget for company at each location (in thousands of dollars)
+Population -- Population size in region (in thousands)
+Price -- Price company charges for car seats at each site
+Shelf Location at stores -- A factor with levels Bad, Good and Medium indicating the quality of the shelving location for the car seats at each site
+Age -- Average age of the local population
+Education -- Education level at each location
+Urban -- A factor with levels No and Yes to indicate whether the store is in an urban or rural location
+US -- A factor with levels No and Yes to indicate whether the store is in the US or not
+[ ]
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn import datasets  
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.tree import  DecisionTreeClassifier
+from sklearn import tree
+from sklearn.metrics import classification_report
+from sklearn import preprocessing
+[ ]
+# import data 
+comp = pd.read_csv('Company_Data.csv')
+
+[ ]
+comp['Sales_Range'] = pd.cut(comp.Sales,bins=[0,3,6,10,14,20],
+                                     labels=['Poor','Below_Avg','Avg','Above_Avg','Outstanding'],include_lowest=True)
+comp
+
+[ ]
+#Using Get dummies on dATASET
+comp1=pd.get_dummies(comp.iloc[:,1:11])
+comp1
+
+[ ]
+result = pd.concat([comp['Sales_Range'], comp1], axis=1)
+display(result)
+
+[ ]
+comp2 = result.copy()
+comp2
+
+[ ]
+x=comp2.iloc[:,1:]
+y=comp2['Sales_Range']
+[ ]
+x
+
+[ ]
+y
+0            Avg
+1      Above_Avg
+2      Above_Avg
+3            Avg
+4      Below_Avg
+         ...    
+395    Above_Avg
+396          Avg
+397          Avg
+398    Below_Avg
+399          Avg
+Name: Sales_Range, Length: 400, dtype: category
+Categories (5, object): ['Poor' < 'Below_Avg' < 'Avg' < 'Above_Avg' < 'Outstanding']
+[ ]
+colnames = list(x.columns)
+colnames
+['CompPrice',
+ 'Income',
+ 'Advertising',
+ 'Population',
+ 'Price',
+ 'Age',
+ 'Education',
+ 'ShelveLoc_Bad',
+ 'ShelveLoc_Good',
+ 'ShelveLoc_Medium',
+ 'Urban_No',
+ 'Urban_Yes',
+ 'US_No',
+ 'US_Yes']
+[ ]
+# Splitting data into training and testing data set
+x_train, x_test,y_train,y_test = train_test_split(x,y, test_size=0.25,random_state=40)
+Model Building
+Building Decision Tree Classifier using Entropy Criteria
+[ ]
+model = DecisionTreeClassifier(criterion = 'entropy',max_depth=3)
+model.fit(x_train,y_train)
+DecisionTreeClassifier(criterion='entropy', max_depth=3)
+[ ]
+#PLot the decision tree
+tree.plot_tree(model);
+
+
+[ ]
+fig, axes = plt.subplots(figsize = (18,18))
+fn=['CompPrice',
+ 'Income',
+ 'Advertising',
+ 'Population',
+ 'Price',
+ 'Age',
+ 'Education',
+ 'ShelveLoc_Bad',
+ 'ShelveLoc_Good',
+ 'ShelveLoc_Medium',
+ 'Urban_No',
+ 'Urban_Yes',
+ 'US_No',
+ 'US_Yes']
+cn=['Poor','Below_Avg','Avg','Above_Avg','Outstanding']
+
+tree.plot_tree(model,
+               feature_names = fn,
+               class_names=cn,
+               filled = True,
+               fontsize=10);
+
+Model Validation and Testing
+[ ]
+#Predicting on test data
+preds = model.predict(x_test) # predicting on test data set 
+pd.Series(preds).value_counts() # getting the count of each category 
+Avg          68
+Below_Avg    18
+Above_Avg    14
+dtype: int64
+[ ]
+preds
+array(['Above_Avg', 'Avg', 'Avg', 'Avg', 'Avg', 'Avg', 'Above_Avg', 'Avg',
+       'Avg', 'Above_Avg', 'Avg', 'Avg', 'Avg', 'Below_Avg', 'Above_Avg',
+       'Below_Avg', 'Avg', 'Avg', 'Avg', 'Avg', 'Avg', 'Avg', 'Avg',
+       'Above_Avg', 'Avg', 'Avg', 'Above_Avg', 'Below_Avg', 'Above_Avg',
+       'Above_Avg', 'Avg', 'Avg', 'Above_Avg', 'Avg', 'Avg', 'Avg',
+       'Above_Avg', 'Below_Avg', 'Avg', 'Avg', 'Avg', 'Below_Avg', 'Avg',
+       'Avg', 'Avg', 'Below_Avg', 'Below_Avg', 'Avg', 'Avg', 'Avg', 'Avg',
+       'Avg', 'Avg', 'Avg', 'Below_Avg', 'Avg', 'Avg', 'Avg', 'Avg',
+       'Below_Avg', 'Avg', 'Avg', 'Avg', 'Avg', 'Below_Avg', 'Avg',
+       'Above_Avg', 'Avg', 'Below_Avg', 'Above_Avg', 'Avg', 'Avg', 'Avg',
+       'Avg', 'Avg', 'Avg', 'Avg', 'Avg', 'Avg', 'Below_Avg', 'Avg',
+       'Avg', 'Below_Avg', 'Below_Avg', 'Avg', 'Avg', 'Above_Avg', 'Avg',
+       'Below_Avg', 'Avg', 'Below_Avg', 'Below_Avg', 'Above_Avg', 'Avg',
+       'Avg', 'Avg', 'Avg', 'Avg', 'Below_Avg', 'Avg'], dtype=object)
+[ ]
+pd.crosstab(y_test,preds) # getting the 2 way table to understand the correct and wrong predictions
+
+[ ]
+# Accuracy 
+np.mean(preds==y_test)
+0.49
+Building Decision Tree Classifier (CART) using Gini Criteria
+[ ]
+from sklearn.tree import DecisionTreeClassifier
+model_gini = DecisionTreeClassifier(criterion='gini', max_depth=3)
+[ ]
+model_gini.fit(x_train, y_train)
+DecisionTreeClassifier(max_depth=3)
+[ ]
+#Prediction and computing the accuracy
+pred=model.predict(x_test)
+np.mean(preds==y_test)
+0.49
+Bagging
+[ ]
+# Bagged Decision Trees for Classification
+
+from sklearn.model_selection import KFold
+from sklearn.model_selection import cross_val_score
+from sklearn.ensemble import BaggingClassifier
+from sklearn.tree import DecisionTreeClassifier
+
+[ ]
+
+seed = 7
+
+kfold = KFold(n_splits=10)
+cart = DecisionTreeClassifier()
+num_trees = 100
+
+[ ]
+Bagging_model = BaggingClassifier(base_estimator=cart, n_estimators=num_trees, random_state=seed)
+Bagging_model.fit(x_train,y_train)
+results = cross_val_score(Bagging_model, x_train, y_train, cv=kfold)
+
+[ ]
+print(results.mean())
+0.6233333333333333
+[ ]
+Bagging_preds = Bagging_model.predict(x_test)
+
+[ ]
+pd.crosstab(y_test,Bagging_preds)
+
+[ ]
+# Accuracy 
+np.mean(Bagging_preds==y_test)
+0.62
+Random Forest
+[ ]
+from sklearn.ensemble import RandomForestClassifier
+[ ]
+num_trees = 100
+max_features = 3
+kfold = KFold(n_splits=10)
+Random_forest_model = RandomForestClassifier(n_estimators=num_trees, max_features=max_features)
+Random_forest_model.fit(x_train,y_train)
+RandomForestClassifier(max_features=3)
+[ ]
+Random_forest_results = cross_val_score(Random_forest_model, x_train, y_train, cv=kfold)
+print(Random_forest_results.mean())
+0.6
+[ ]
+Random_forest_preds = Random_forest_model.predict(x_test)
+pd.crosstab(y_test,Random_forest_preds)
+
+[ ]
+# Accuracy 
+np.mean(Random_forest_preds==y_test)
+0.55
+ADAPTIVE BOOSTING (ADABOOST)
+[ ]
+from sklearn.ensemble import AdaBoostClassifier
+[ ]
+num_trees = 10
+seed=7
+kfold = KFold(n_splits=10)
+AdaBoost_model = AdaBoostClassifier(n_estimators=num_trees, random_state=seed)
+AdaBoost_model.fit(x_train,y_train)
+AdaBoostClassifier(n_estimators=10, random_state=7)
+[ ]
+AdaBoost_results = cross_val_score(AdaBoost_model, x_train, y_train, cv=kfold)
+print(AdaBoost_results.mean())
+0.5399999999999999
+[ ]
+AdaBoost_preds = AdaBoost_model.predict(x_test)
+pd.crosstab(y_test,AdaBoost_preds)
+
+[ ]
+# Accuracy 
+np.mean(Random_forest_preds==y_test)
+0.55
